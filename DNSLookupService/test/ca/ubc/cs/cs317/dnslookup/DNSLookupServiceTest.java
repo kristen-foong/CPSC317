@@ -126,4 +126,17 @@ public class DNSLookupServiceTest {
                 Collections.singleton(new ResourceRecord(question, 16482, InetAddress.getByName("103.233.44.22"))),
                 Collections.emptySet(), Collections.emptySet());
     }
+
+//    @Test
+//    public void testQuerying() throws UnknownHostException {
+//        DNSQuestion question = new DNSQuestion("www.cs.ubc.ca", RecordType.A, RecordClass.IN);
+//        Set<ResourceRecord> ns = new HashSet<>();
+//        ns = service.individualQueryProcess(question, service.nameServer);
+//        Collection<ResourceRecord> results = cache.getCachedResults(question, true);
+//        List<ResourceRecord> resultsList = cache.getCachedResults(question, true);
+//        System.out.println("Nameserver set is empty: " + ns.isEmpty());
+//        System.out.println("Collection is empty: " + results.isEmpty());
+//        System.out.println("List is empty: " + resultsList.isEmpty());
+//        //service.iterativeQuery(question, service.nameServer);
+//    }
 }

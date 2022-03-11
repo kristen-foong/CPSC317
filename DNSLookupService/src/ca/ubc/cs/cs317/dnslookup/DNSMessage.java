@@ -486,7 +486,6 @@ public class DNSMessage {
         buffer.get(arr, 0, pos);
         buffer.position(pos);
         return arr;
-//        return buffer.array();
     }
 
     /**

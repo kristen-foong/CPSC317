@@ -138,8 +138,42 @@ public class DNSLookupService {
      * @param server   Address of the server to be used for the first query.
      */
     public void iterativeQuery(DNSQuestion question, InetAddress server) {
+        Set<ResourceRecord> set = individualQueryProcess(question, server);
+        List<ResourceRecord> cacheResults = cache.getCachedResults(question, true);
+        // if there are no answers
+        if (cacheResults.isEmpty()) {
+            ResourceRecord rr = null;
+            InetAddress addr = server;
+            for (ResourceRecord r : set) {
+                String domain = r.getTextResult();
+                DNSQuestion q = new DNSQuestion(domain, RecordType.A, r.getRecordClass());
+                List<ResourceRecord> cacheResult2 = cache.getCachedResults(q, true);
+                if (cacheResult2.isEmpty()) {
+//                    iterativeQuery(q, nameServer);
+//                    cacheResult2 = cache.getCachedResults(q, true);
+                    continue;
+                }
+                rr = cacheResult2.get(0);
+                addr = rr.getInetResult();
+                iterativeQuery(question, addr);
+            }
 
-        /* TO BE COMPLETED BY THE STUDENT */
+            for (ResourceRecord r : set) {
+                String domain = r.getTextResult();
+                DNSQuestion q = new DNSQuestion(domain, RecordType.A, r.getRecordClass());
+                List<ResourceRecord> cacheResult2 = cache.getCachedResults(q, true);
+                if (cacheResult2.isEmpty()) {
+                    iterativeQuery(q, nameServer);
+                    cacheResult2 = cache.getCachedResults(q, true);
+//                    continue;
+                }
+                rr = cacheResult2.get(0);
+                addr = rr.getInetResult();
+                iterativeQuery(question, addr);
+            }
+
+        }
+
     }
 
     /**
@@ -161,12 +195,15 @@ public class DNSLookupService {
     protected Set<ResourceRecord> individualQueryProcess(DNSQuestion question, InetAddress server) {
         Set<ResourceRecord> set = new HashSet<>();
         DNSMessage msg = buildQuery(question);
-        byte[] getUsed = msg.getUsed();
+//        byte[] getUsed = msg.getUsed();
         int len = msg.MAX_DNS_MESSAGE_LENGTH;
-        byte[] data = java.util.Arrays.copyOf(getUsed, len);
-        DatagramPacket dp = new DatagramPacket(data, len, server, DEFAULT_DNS_PORT);
+//        byte[] data = java.util.Arrays.copyOf(getUsed, len);
+        byte[] data = msg.getUsed();
+//        int len = data.length;
+//        System.out.println("Sending data of length: " + data.length);
+        DatagramPacket dp = new DatagramPacket(data, data.length, server, DEFAULT_DNS_PORT);
         try {
-            socket.connect(server, DEFAULT_DNS_PORT);
+//            socket.connect(server, DEFAULT_DNS_PORT);
             socket.setSoTimeout(SO_TIMEOUT);
 
             verbose.printQueryToSend(question, server, msg.getID());
@@ -180,7 +217,7 @@ public class DNSLookupService {
                     socket.receive(responseDP);
                     // need to check if response is null, for same query, and not a response
                     DNSMessage response = new DNSMessage(responseDP.getData(), responseDP.getLength());
-                    if (responseDP == null || response.getID() != msg.getID() || response.getQR() != true) {
+                    if (response.getID() != msg.getID() || !response.getQR()) {
                         responseDP = new DatagramPacket(responseData, len, server, DEFAULT_DNS_PORT);
                         verbose.printQueryToSend(question, server, msg.getID());
                         socket.send(dp);
@@ -201,8 +238,8 @@ public class DNSLookupService {
         } catch (Exception e) {
 
         }
-        socket.close();
-        socket.disconnect();
+//        socket.close();
+//        socket.disconnect();
         return set;
     }
 
